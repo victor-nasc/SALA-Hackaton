@@ -41,7 +41,7 @@ def get_clusters(vector):
         changes = np.append(0, changes)
 
     indices = changes.reshape(-1, 2)
-    indices[:, 1] -= 255 
+    indices[:, 1] -= 1  
 
     return indices
 
