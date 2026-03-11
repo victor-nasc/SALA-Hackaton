@@ -3,6 +3,7 @@ import numpy as np
 
 from preprocess import get_fish_mask, clean_VR_image, remove_entering_fish
 
+bg_warmup = 20
 
 video_path = '10s.mp4'
 cap = cv2.VideoCapture(video_path)
@@ -13,6 +14,8 @@ clahe = cv2.createCLAHE(clipLimit=7.0, tileGridSize=(8,8))
 
 stack = None
 delta_lin = 120
+column_entering = np.zeros((1, 1080 - 2*delta_lin), dtype=np.uint8)
+i = 0
 
 while True:
     ret, frame = cap.read()
@@ -21,11 +24,15 @@ while True:
 
     mask = get_fish_mask(frame, bg_sub, clahe)
 
+    i += 1
+    if i < bg_warmup:
+        continue
+
     # build VR image
     column = mask[delta_lin:-delta_lin, 0].reshape(1, -1)
-
     next_column = mask[delta_lin:-delta_lin, 1].reshape(1, -1)
-    column = remove_entering_fish(column, next_column)
+
+    column, column_entering = remove_entering_fish(column, column_entering, next_column)
 
     stack = column if stack is None else np.vstack((stack, column))
 

@@ -29,28 +29,18 @@ def clean_VR_image(stack):
     return stack
 
 
-def get_clusters(vector):
-    vector = vector.flatten()
-    
-    # indices that change from 0 <--> 255
-    changes = np.where(np.diff(vector) != 0)[0] + 255
-    
-    if vector[-1] == 255:
-        changes = np.append(changes, len(vector))
-    if vector[0] == 255:
-        changes = np.append(0, changes)
+def remove_entering_fish(column, column_entering, next_column):
+    # remove fish that are entering the current frame if on the previous 
+    # frame we already detected that they are entering (column_entering == 255)
+    column = (((column == 255) & (column_entering == 0)).astype(np.uint8) * 255)
 
-    indices = changes.reshape(-1, 2)
-    indices[:, 1] -= 1  
+    # detect fish entering the frame
+    # current collumn is 255 (fish) and next column is 0 (background)
+    positions_to_delete = (column == 255) & (next_column == 0)
 
-    return indices
+    # delete fish entering and save its position for the next frame
+    column[positions_to_delete] = 0
+    column_entering[positions_to_delete] = 0
 
-
-def remove_entering_fish(column, next_column):
-    clusters = get_clusters(column)
-    for start, end in clusters:
-        if next_column[start:end].any():
-            column[start:end] = 0
-
-    return column
+    return column, column_entering
 
